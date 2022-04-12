@@ -1,0 +1,199 @@
+{% extends 'main.html' %} {% block content %}
+
+<main>
+
+
+
+    <!-- scorecard -->
+    <div class="center-sc">
+      <div class="sc-container">
+        <!-- CARD HEADER -->
+        <div class="center-text cap">
+          <p class="dkbl-bg sc-header">
+            {{ match.event.course.name }} {{ match.event.side_played }}
+          </p>
+        </div>
+
+
+        <!-- HOLE LABELS -->
+        <div class="scorecard">
+
+          <div class="sc-labels">
+            <p class="red-bg">hole</p>
+            <p class="white-bg">par</p>
+            <p class="green-bg">yards</p>
+            <p class="tan-bg">hdcp</p>
+          </div>
+
+          <!-- HOLE INFO -->
+          {% for hole in holes %}
+          <div class="sc-boxes">
+            <p class="red-bg">{{ hole.number }}</p>
+            <p class="white-bg">{{ hole.par }}</p>
+            <p class="green-bg">{{ hole.yardage }}</p>
+            <p class="tan-bg">{{ hole.handicap }}</p>
+          </div>
+          {% endfor %}
+
+          <!-- SIDE TOTALS -->
+          {% if match.event.side_played == "Front" %}
+          <div class="sc-boxes">
+            <p class="red-bg">OUT</p>
+            <p class="white-bg">{{ match.event.course.par_out }}</p>
+            <p class="green-bg">{{ match.event.course.yards_out }}</p>
+            <p class="tan-bg"></p>
+          </div>
+          {% elif match.event.side_played == "Back" %}
+          <div class="sc-boxes">
+            <p class="red-bg">IN</p>
+            <p class="white-bg">{{ match.event.course.par_in }}</p>
+            <p class="green-bg">{{ match.event.course.yards_in }}</p>
+            <p class="tan-bg"></p>
+          </div>
+          {% endif %}
+        </div>
+
+
+
+
+        <!-- data -->
+
+
+
+        <!-- TEAM 1 INDIVIDUAL SCORES -->
+        {% for card in team1_player_cards %}
+        <div class="score-row line">
+          <div class="sc-labels white-bg">
+            <p>{{ card.player.user.get_full_name }}</p>
+          </div>
+
+          <div class="score-row white-bg">
+            {% for score in card.scores.values %} 
+            {% if score == 0 %}
+            <p></p>
+            {% else %}
+            <p>{{ score }}</p>
+            {% endif %} {% endfor %}
+
+
+            {% if match.event.side_played == 'front' %}
+            {% if card.front == 0 %}
+            <p></p>
+            {% else %}
+            <p>{{ card.front }}</p>
+            {% endif %}
+
+            {% else %}
+            {% if card.back == 0 %}
+            <p></p>
+            {% else %}
+            <p>{{ card.back }}</p>
+            {% endif %}
+            {% endif %}
+
+          </div>
+        </div>
+        {% endfor %}
+
+
+        <!-- TEAM 1 TEAM POINTS -->
+        <div class="score-row line">
+          <div class="sc-labels tan-bg">
+            <p>{{ team1_card.team.name }}</p>
+          </div>
+
+          <div class="score-row tan-bg">
+            {% for score in team1_card.scores.values %} 
+            <p>{{ score }}</p>
+            {% endfor %}
+
+            {% if match.event.side_played == 'front' %}
+            <p>{{ team1_card.front }}</p>
+            {% else %}
+            <p>{{ team1_card.back }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+
+        <!-- HANDICAP ROW -->
+        <div class="score-row">
+          <div class="sc-labels dkbl-bg">
+            <p>strokes</p>
+          </div>
+          <div class="score-row">
+            {% for strokes in match.hdcp.strokes.values %}
+            <p class="dkbl-bg">{{strokes}}</p>
+            {% endfor %}
+            <p class="dkbl-bg"></p>
+          </div>
+        </div>
+
+
+        <!-- TEAM 2 TEAM POINTS -->
+        <div class="score-row line">
+          <div class="sc-labels tan-bg">
+            <p>{{ team2_card.team.name }}</p>
+          </div>
+
+          <div class="score-row tan-bg">
+            {% for score in team2_card.scores.values %}
+            <p>{{ score }}</p>
+            {% endfor %}
+
+            {% if match.event.side_played == 'front' %}
+            <p>{{ team2_card.front }}</p>
+            {% else %}
+            <p>{{ team2_card.back }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+
+        <!-- TEAM 2 INDIVIDUAL SCORES -->
+        {% for card in team2_player_cards %}
+        <div class="score-row line">
+          <div class="sc-labels white-bg">
+            <p>{{ card.player.user.get_full_name }}</p>
+          </div>
+
+          <div class="score-row white-bg">
+            {% for score in card.scores.values %}
+            {% if score == 0 %}
+            <p></p>
+            {% else %}
+            <p>{{ score }}</p>
+            {% endif %}
+            {% endfor %}
+
+
+            {% if match.event.side_played == 'front' %}
+            {% if card.front == 0 %}
+            <p></p>
+            {% else %}
+            <p>{{ card.front }}</p>
+            {% endif %}
+
+            {% else %}
+            {% if card.back == 0 %}
+            <p></p>
+            {% else %}
+            <p>{{ card.back }}</p>
+            {% endif %}
+            {% endif %}
+          </div>
+
+        </div>
+        {% endfor %}
+
+
+        <div class="sc-footer"></div>
+      </div>
+
+    </div> <!-- bottom of scorecard -->
+
+
+</main>
+
+
+{% endblock content %}

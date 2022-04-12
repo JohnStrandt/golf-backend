@@ -1,0 +1,135 @@
+{% extends 'main.html' %} 
+{% load scoring_tags %}
+{% block content %}
+
+<style>
+  .score__card {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    border: 2px solid var(--color-light);
+    border-radius: 10px;
+    margin: 1rem;
+  }
+  .bg-image {
+    width: 400px;
+    height: 650px;
+    background-image: url("{{ hole.imageURL }}");
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+  .score-buttons {
+    position: fixed;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+    bottom: 5px;
+  }
+  .score-players {
+    display: grid;
+    position: fixed;
+    height: 50vh;
+    width: 80vw;
+    place-self: center;
+    border-radius: 20px;
+    place-content: center;
+    background-color: rgba(53, 158, 100, 0.95);
+    /* cursor: pointer; */
+  }
+  .score-players p{
+    color: white;
+  }
+
+  .player {
+    display: inline-grid;
+    grid-template-columns: 6fr 4fr;
+    align-items: center;
+  }
+
+  .player-score {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .strokes {
+    text-align: center;
+  }
+
+
+</style>
+
+<script>
+
+  const toggle_vis = () => {
+    let x = document.getElementById("toggler");
+    if (x.style.display === "none") {
+      x.style.display = "grid";
+    } else {
+      x.style.display = "none";
+    }
+  }
+
+  // const inc_score = (scores, i) => {
+  //   console.log(scores);
+  //   scores[i] = scores[i] + 1;
+  //   return scores;
+  // }
+
+  // const dec_score = () => {
+  //   console.log("low");
+  // }
+
+</script>
+
+
+<main>
+
+  <div class="score__card">
+    <div class="score-players" id="toggler">
+      <p>index: {{ index }}</p>
+      <p>Hole: {{hole.number}}</p>
+      <p>Yardage: {{hole.yardage}}</p>
+      <p>par: {{hole.par}}</p>
+      <p>Handicap: {{hole.handicap}}</p>
+      <p>{{ hdcp_team }} gets {{ strokes }} strokes</p>
+
+
+ 
+      {% for card in cards %}
+      <div class="player">
+        <p>{{ card.player.user.get_full_name }}</p>
+        <div class="player-score">
+
+          <a class="btn btn--sub btn--md my-md" href="">&#8593;</a>
+
+          <p class="strokes">strokes</p>
+
+          <a class="btn btn--sub btn--md my-md" href="">&#8595;</a>
+
+        </div>
+        
+      </div>
+      {% endfor %}
+
+
+
+    </div>
+
+    <div class="bg-image"></div>
+  </div>
+
+
+
+
+  <div class="score-buttons">
+    <a class="btn btn--sub btn--md my-md" href="{% url 'prev-hole' %}">&#10094; prev</a>
+
+    <button class="btn btn--suc btn--md my-md" onclick="toggle_vis()">toggle scoring</button>
+
+    <a class="btn btn--sub btn--md my-md" href="{% url 'next-hole' %}">next &#10095;</a>
+  </div>
+
+</main>
+{% endblock content %}

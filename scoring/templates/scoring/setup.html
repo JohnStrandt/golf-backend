@@ -1,0 +1,40 @@
+{% extends 'main.html' %} {% block content %}
+
+<main>
+  <div class="events__card">
+
+    <div class="events__header">
+      <h4>Today's Match</h4>
+      <h4>Scorecard Setup</h4>
+    </div>
+
+    <div class="teams">
+
+      <div class="team_card">
+        <h4 class="center-text">{{ match.opponent_1 }}</h4>
+        {% for player in team_1 %}
+        <div class="players">
+          <p>{{ player.user.get_full_name }}</p>
+          <a class="btn btn--sub btn--sm my-sm" href="{% url 'choose-sub' player.id %}">Change Player</a>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="team_card">
+        <h4 class="center-text">{{ match.opponent_2 }}</h4>
+        {% for player in team_2 %}
+        <div class="players">
+          <p>{{ player.user.get_full_name }}</p>
+          <a class="btn btn--sub btn--sm my-sm" href="{% url 'choose-sub' player.id %}">Change Player</a>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+    <a class="btn btn--sub btn--lg my-md" href="{% url 'get-cards' %}">Begin</a>
+
+  </div>
+</main>
+
+{% endblock content %}

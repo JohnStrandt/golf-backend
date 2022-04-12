@@ -1,0 +1,8 @@
+venv/
+.env
+db.sqlite3
+*.log
+*.pot
+*.pyc 
+local_settings.py 
+media

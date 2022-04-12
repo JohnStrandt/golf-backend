@@ -1,0 +1,42 @@
+{% extends 'main.html' %} {% block content %}
+
+<main>
+
+  <div class="events__header">
+    <h3>{{ event.league.name }} {{ event.name }}</h3>
+    <a class="btn btn--sub btn--lg my-md" href="{% url 'create-match' event.id %}">Create Match</a>
+  </div>
+  
+  {% for match in matches %}
+
+  <!-- <div class="column card"> -->
+  <div class="match-card">
+
+    {% if request.user.is_staff %}
+    <div>
+      <a class="tag tag--pill tag--main settings__btn" href="{% url 'update-match' match.id %}">
+        <i class="im im-edit"></i>Edit
+      </a>
+    </div>
+    {% endif %}
+
+    <div class="event">
+      <a href="{% url 'match' match.id %}">
+        <p> {{ match.name }} </p>
+      </a>
+    </div>
+
+    {% if request.user.is_staff %}
+    <div>
+      <a class="tag tag--pill tag--red settings__btn" href="{% url 'delete-match' match.id %}">
+        <i class="im im-x-mark-circle-o"></i> Delete</a>
+      </a>
+    </div>
+    {% endif %}
+
+
+  </div>
+  {% endfor %}
+
+</main>
+{% endblock content %}

@@ -1,0 +1,18 @@
+{% extends 'main.html' %} {% block content %}
+
+<main>
+  <div class="events__card center-text">
+
+    {% if match %}
+    <h1>Next Match</h1>
+    <p>{{ match.event.date }}</p>
+    <p>{{ match.name }}</p>
+    <p>{{ match.event.course.name }} {{ match.event.side_played }}</p>
+    {% else %}
+    <h3>No Match Scheduled Today</h3>
+    {% endif %}
+
+  </div>
+</main>
+
+{% endblock content %}

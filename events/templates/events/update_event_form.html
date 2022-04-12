@@ -1,0 +1,40 @@
+{% extends 'main.html' %} {% block content %}
+
+<!-- Main Section -->
+
+<main class="formPage my-md">
+  <div class="events__header">
+    <h3>Update Event</h3>
+  </div>
+  <div class="content-box">
+    <div class="formWrapper">
+      <a class="backButton" href="{% url 'events-crud' %}">
+        <i class="im im-angle-left"></i>
+      </a>
+      <br />
+      
+      <form
+        method="POST"
+        action="{% url 'update-event' event.id %}"
+        enctype="multipart/form-data"
+      >
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div class="form__field">
+          <label for="formInput#text">{{ field.label }}</label>
+          {{ field }}
+        </div>
+        {% endfor %}
+
+        <input
+          class="btn btn--sub btn--lg my-md"
+          type="submit"
+          value="Submit"
+        />
+      </form>
+    </div>
+  </div>
+</main>
+
+{% endblock content %}

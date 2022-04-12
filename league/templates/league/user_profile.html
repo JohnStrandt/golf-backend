@@ -1,0 +1,40 @@
+{% extends 'main.html' %} {% block content %}
+<!-- Main Section -->
+<main class="profile my-md">
+  <div class="container">
+    <div class="layout">
+      <div class="column column--1of3">
+        <div class="card text-center">
+          <div class="card__body dev">
+
+            <img
+              class="avatar avatar--xl"
+              src="{{ profile.imageURL }}"
+            />
+
+            <div class="dev__meta">
+              <h3 class="player_name">
+                {{ profile.first_name }} {{ profile.last_name }}
+              </h3>
+              <p class="dev__title">{{ profile.team }}</p>
+              {% if profile.is_sub %}
+              <p class="dev__title">Sub</p>
+              {% endif %}
+              <p class="dev__title">handicap: {{ profile.handicap }}</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="column column--2of3">
+        <div class="devInfo">
+          <h3 class="devInfo__title">About Me</h3>
+          <p class="devInfo__about">Hello</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+{% endblock content %}

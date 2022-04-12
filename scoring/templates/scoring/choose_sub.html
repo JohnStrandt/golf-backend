@@ -1,0 +1,44 @@
+{% extends 'main.html' %} {% block content %}
+
+<main>
+  <div class="events__card text_center">
+
+    <a class="back-div" href="{% url 'show-teams' %}">
+      <i class="im im-angle-left"></i>
+    </a>
+
+    <div class="events__header">
+      <h4>Change Player</h4>
+      <h4>{{player.user.get_full_name}}</h4>
+    </div>
+
+    <div class="team_card">
+
+      {% if subs %}
+      {% for sub in subs %}
+      <div class="players">
+        <p>{{ sub.user.get_full_name }}</p>
+        <a class="btn btn--sub btn--sm my-sm" href="{% url 'sub-player' player.id sub.id %}">Select Player</a>
+      </div>
+      {% endfor %}
+
+      {% else %}
+      <div class="players">
+        <p>{{ player.team }}</p>
+        <p>No Subs Available</p>
+      </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+</main>
+
+{% endblock content %}
+
+
+<!-- 
+<a class="backButton" href="{% url 'show-teams' %}">
+  <i class="im im-angle-left"></i>
+</a> 
+-->

@@ -1,0 +1,29 @@
+{% extends 'main.html' %} {% block content %}
+
+<main>
+
+  <div class="events__header">
+    <h3>{{ league.name }} Events</h3>
+  </div>
+  
+  {% for event in events %}
+
+    <div class="events__card text_center">
+      <a href="{% url 'matches' event.id %}">
+        <div class="event">
+          <div>
+            <h5>{{ event.name }}</h5>
+            <p>{{ event.date }}</p>
+          </div>
+          <div>
+            <p>{{ event.course.name }} {{ event.side_played }}</p>
+            <p>{{ event.format }}</p>
+          </div>
+        </div>
+      </a>
+    </div>
+  
+  {% endfor %}
+
+</main>
+{% endblock content %}

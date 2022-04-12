@@ -1,0 +1,30 @@
+{% extends 'main.html' %} {% block content %} 
+{% load static %}
+
+<main class="settingsPage profile my-md">
+  <div class="container">
+    <div class="layout">
+      <div class="column column--1of3">
+        <div class="card text-center">
+          <div class="card__body dev">
+
+            <a class="tag tag--pill tag--main settings__btn" href="{% url 'edit-profile' %}"
+              ><i class="im im-edit"></i>Edit</a
+            >
+            <img
+              class="avatar avatar--xl dev__avatar"
+              src="{{ player.profile_image.url }}"
+            />
+            <h3 class="player_name">
+              {{ player.first_name }} {{ player.last_name }}
+            </h3>
+            <p class="dev__title">{{ player.team }}</p>
+            <p class="dev__title">handicap: {{ player.handicap }}</p>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock content %}

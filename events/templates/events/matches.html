@@ -1,0 +1,28 @@
+{% extends 'main.html' %} {% block content %}
+
+<main>
+
+  <div class="events__header">
+    <h3>{{ event.league.name }} {{ event.name }}</h3>
+  </div>
+
+  
+  {% for match in matches %}
+
+  <!-- <div class="column card"> -->
+  <div class="match-card">
+    <div class="event">
+      <a href="{% url 'match' match.id %}">
+        <p>{{ match.name }}</p>
+        {% if match.opponent_1.points and match.opponent_2.points %}
+        <p>in points area</p>
+        <p>{{ match.opponent_1.points }}  {{ match.opponent_2.points }}</p>
+        {% endif %}
+      </a>
+    </div>
+  </div>
+
+  {% endfor %}
+
+</main>
+{% endblock content %}
