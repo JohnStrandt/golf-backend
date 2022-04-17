@@ -19,7 +19,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.get(username=data['username'])
         refresh = RefreshToken.for_user(user)
 
-
         return {
             'refresh': str(refresh),
             'access': str(refresh.access_token),
@@ -54,15 +53,20 @@ class TeamSerializer(serializers.ModelSerializer):
 
 class PlayerSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField('get_player_name')
+    team = serializers.SerializerMethodField('get_player_team')
     
     class Meta:
         model = Player
-        fields = ["id", "name", "profile_image"]
+        fields = ["id", "name", "profile_image", "handicap", "team"]
 
     # serialized method field
     def get_player_name(self, player):
         username = player.user.get_full_name()
         return username
+    
+    def get_player_team(self, player):
+        return player.team.name
+
 
 
 class EventSerializer(serializers.ModelSerializer):

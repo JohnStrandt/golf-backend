@@ -19,9 +19,7 @@ from .utils import calcMatchHDCP
 from .selectors import searchMatches, getRosters, makePlayerCard, makeTeamCard, getHoles
 
 
-
-
-
+# login
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
