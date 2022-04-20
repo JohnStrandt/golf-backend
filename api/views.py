@@ -129,17 +129,15 @@ def getTodaysMatch(request):
         match = searchMatches(request)
         roster_data = getRosters(match)
         match_data = MatchStatusSerializer(match, many=False)
-        # print("match_data: ",match_data.data)
         serializer = {"match": match_data.data, "rosters": roster_data}
         return Response(serializer)
     except:
-        next_match = nextMatch()
+        next_match = nextMatch(request)
         print("next_match: ",next_match)
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(next_match, status=status.HTTP_404_NOT_FOUND)
 
 
 
-# WAS GET
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def startResumeMatch(request, pk):
@@ -148,14 +146,7 @@ def startResumeMatch(request, pk):
     pcards2_query = None
 
     try:
-        # test this, should get todays match before coming here
-        # returns match that user is playing in today
-        # match = searchMatches(request)
-
-        print(pk)
-        print(request.data)
         match = Match.objects.get(id=pk)
-        print(match)
 
         if match.cards_made:
             pcards1_query = PlayerScorecard.objects.filter(
@@ -188,14 +179,6 @@ def startResumeMatch(request, pk):
             for playerID in data["team2"]:
                 temp = Player.objects.get(id=playerID)
                 team_2.append(temp)
-
-            # for player in data["team1"]:
-            #     temp = Player.objects.get(id=player["id"])
-            #     team_1.append(temp)
-
-            # for player in data["team2"]:
-            #     temp = Player.objects.get(id=player["id"])
-            #     team_2.append(temp)
 
             for player in team_1:
                 hdcp_1 += player.handicap
@@ -265,6 +248,76 @@ def startResumeMatch(request, pk):
     return Response(serializer)
 
 
+
+def add_scores(scores):
+    total = 0
+    for value in scores.values():
+        if not value == None:
+            total += value
+    return total
+
+
+
+def update_team_cards(cards, hole, side):
+    for _card in cards:
+        card = TeamScorecard.objects.get(id=_card["id"])
+        card.scores.update({str(hole): _card["score"]})
+        
+        total = add_scores(card.scores)
+        if (side == "Front"):
+            card.front = total
+        else:
+            card.back = total
+        card.points = total
+
+        card.save()
+
+
+
+def update_player_cards(cards, hole, side):
+    for _card in cards:
+        card = PlayerScorecard.objects.get(id=_card["id"])
+        card.scores.update({str(hole): _card["score"]})
+        
+        total = add_scores(card.scores)
+        if (side == "Front"):
+            card.front = total
+        else:
+            card.back = total
+        card.total = total
+
+        card.save()
+
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def scoreHole(request):
+    data = request.data
+    hole = data["hole"]
+    side = data["side"]
+    teamCards = data["team_cards"]
+    playerCards = data["player_cards"]
+
+    update_team_cards(teamCards, hole, side)
+    update_player_cards(playerCards, hole, side)
+
+    message = "Cards Updated"
+    return Response(message)
+
+
+
+
+
+'''
+
+                    NOT USED YET
+
+'''
+
+
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def getPlayerCards(request):
@@ -283,36 +336,18 @@ def getTeamCards(request):
     return Response(serializer.data)
 
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def updatePlayerScorecard(request, pk):
-    card = PlayerScorecard.objects.get(id=pk)
-    serializer = PlayerScorecardSerializer(instance=card, data=request.data)
 
-    # could possibly update one hole here
-    # hole = data.hole
-    # card.scores['hole'] = data.score
-    # PUT method?
 
-    if serializer.is_valid():
-        serializer.save()
-    else:
-        print(serializer.errors)
 
-    return Response(serializer.data)
+#               TESTING
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def updateTeamScorecard(request, pk):
-    card = TeamScorecard.objects.get(id=pk)
-    serializer = TeamScorecardSerializer(instance=card, data=request.data)
+def test(request):
+    data = request.data
+    lunch = data["lunch"]
 
-    print(card)
+    print(lunch)
 
-    if serializer.is_valid():
-        serializer.save()
-    else:
-        print(serializer.errors)
-
-    return Response(serializer.data)
+    return Response("Testing Done")
