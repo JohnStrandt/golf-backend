@@ -74,14 +74,16 @@ def getRosters(match):
     players1 = list()
     for player in players_1:
         players1.append({
-            "name": player.user.get_full_name(), 
+            "name": player.user.get_full_name(),
+            "profile_image": str(player.profile_image),
             "id": str(player.id)
             })
 
     players2 = list()
     for player in players_2:
         players2.append({
-            "name": player.user.get_full_name(), 
+            "name": player.user.get_full_name(),
+            "profile_image": str(player.profile_image),
             "id": str(player.id)
             })
 
@@ -90,7 +92,8 @@ def getRosters(match):
         bench1 = list()
         for player in subs_1:
             bench1.append({
-                "name": player.user.get_full_name(), 
+                "name": player.user.get_full_name(),
+                "profile_image": str(player.profile_image),
                 "id": str(player.id)
                 })
 
@@ -99,7 +102,8 @@ def getRosters(match):
         bench2 = list()
         for player in subs_2:
             bench2.append({
-                "name": player.user.get_full_name(), 
+                "name": player.user.get_full_name(),
+                "profile_image": str(player.profile_image),
                 "id": str(player.id)
                 })
 

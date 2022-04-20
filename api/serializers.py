@@ -84,6 +84,14 @@ class MatchSerializer(serializers.ModelSerializer):
         fields = ["id", "event", "name", "hdcp", "current_hole"]
 
 
+class MatchStatusSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Match
+        fields = ["id", "cards_made", "name"]
+
+
+
 # needed for initializing match info
 class InitPlayerScorecardSerializer(serializers.ModelSerializer):
     player = PlayerSerializer(many=False)

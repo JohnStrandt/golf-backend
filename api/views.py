@@ -1,4 +1,4 @@
-
+from django.shortcuts import redirect
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -11,12 +11,29 @@ from django.contrib.auth.hashers import make_password
 
 from league.models import Player
 from events.models import Event, Match
-from events.models import PlayerScorecard, TeamScorecard
+from events.models import Match, PlayerScorecard, TeamScorecard
 
-from .serializers import EventSerializer, MatchSerializer, InitPlayerScorecardSerializer, PlayerScorecardSerializer, PlayerSerializer, TeamScorecardSerializer, HoleSerializer, RegisterSerializer
+from .serializers import (
+    EventSerializer,
+    MatchSerializer,
+    MatchStatusSerializer,
+    InitPlayerScorecardSerializer,
+    PlayerScorecardSerializer,
+    PlayerSerializer,
+    TeamScorecardSerializer,
+    HoleSerializer,
+    RegisterSerializer,
+)
 
 from .utils import calcMatchHDCP
-from .selectors import searchMatches, getRosters, makePlayerCard, makeTeamCard, getHoles
+from .selectors import (
+    searchMatches,
+    getRosters,
+    makePlayerCard,
+    makeTeamCard,
+    getHoles,
+    nextMatch,
+)
 
 
 # login
@@ -25,14 +42,13 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         # custom claim
-        token['username'] = user.username
+        token["username"] = user.username
 
         return token
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
-
 
 
 @api_view(["POST"])
@@ -50,18 +66,18 @@ def register(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 @api_view(["GET"])
 def getRoutes(request):
     routes = [
+        {"POST": "/api/login"},
+        {"POST": "/api/signin"},
+        {"POST": "/api/register"},
         {"GET": "/api/players"},
-        {"GET": "/api/players/id"},
-        {"POST": "/api/token"},
-        {"POST": "/api/users/register/"},
-        {"POST": "/api/token/refresh"},
+        {"GET": "/api/players/:player.id"},
         {"GET": "/api/events"},
-        {"GET": "/api/matches/id"},
+        {"GET": "/api/events/:event.id"},
         {"GET": "/api/match"},
+        {"GET": "/api/match/:match.id"},
         {"GET": "/api/cards/players"},
         {"GET": "/api/cards/teams"},
         {"POST": "/api/score/player"},
@@ -69,7 +85,6 @@ def getRoutes(request):
     ]
 
     return Response(routes)
-
 
 
 @api_view(["GET"])
@@ -106,54 +121,56 @@ def getEventMatches(request, pk):
     return Response(serializer.data)
 
 
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def getTodaysMatch(request):
     try:
         match = searchMatches(request)
-        serializer = MatchSerializer(match, many=False)
-        return Response(serializer.data)
+        roster_data = getRosters(match)
+        match_data = MatchStatusSerializer(match, many=False)
+        # print("match_data: ",match_data.data)
+        serializer = {"match": match_data.data, "rosters": roster_data}
+        return Response(serializer)
     except:
+        next_match = nextMatch()
+        print("next_match: ",next_match)
         return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 
-"""
-                        MATCH SETUP
-"""
-
-
+# WAS GET
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def getMatchRosters(request):
-    try:
-        match = searchMatches(request)
-        lineup = getRosters(match)
-        return Response(lineup)
-    except:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def initMatch(request):
+def startResumeMatch(request, pk):
     hole_query = None
     pcards1_query = None
     pcards2_query = None
 
     try:
+        # test this, should get todays match before coming here
         # returns match that user is playing in today
-        match = searchMatches(request)
+        # match = searchMatches(request)
+
+        print(pk)
+        print(request.data)
+        match = Match.objects.get(id=pk)
+        print(match)
+
         if match.cards_made:
-            pcards1_query = PlayerScorecard.objects.filter(match=match, team=match.opponent_1)
+            pcards1_query = PlayerScorecard.objects.filter(
+                match=match, team=match.opponent_1
+            )
             player_cards_1 = list(pcards1_query)
-            pcards2_query = PlayerScorecard.objects.filter(match=match, team=match.opponent_2)
+            pcards2_query = PlayerScorecard.objects.filter(
+                match=match, team=match.opponent_2
+            )
             player_cards_2 = list(pcards2_query)
 
             team_card_1 = TeamScorecard.objects.get(match=match, team=match.opponent_1)
             team_card_2 = TeamScorecard.objects.get(match=match, team=match.opponent_2)
 
-            hole_query = getHoles(match.event) 
+            hole_query = getHoles(match.event)
 
         else:
             data = request.data
@@ -164,13 +181,21 @@ def initMatch(request):
             player_cards_1 = []
             player_cards_2 = []
 
-            for player in data["team1"]:
-                temp = Player.objects.get(id=player["id"])
+            for playerID in data["team1"]:
+                temp = Player.objects.get(id=playerID)
                 team_1.append(temp)
 
-            for player in data["team2"]:
-                temp = Player.objects.get(id=player["id"])
+            for playerID in data["team2"]:
+                temp = Player.objects.get(id=playerID)
                 team_2.append(temp)
+
+            # for player in data["team1"]:
+            #     temp = Player.objects.get(id=player["id"])
+            #     team_1.append(temp)
+
+            # for player in data["team2"]:
+            #     temp = Player.objects.get(id=player["id"])
+            #     team_2.append(temp)
 
             for player in team_1:
                 hdcp_1 += player.handicap
@@ -181,7 +206,7 @@ def initMatch(request):
                 hdcp_2 += player.handicap
                 card = makePlayerCard(player, match)
                 player_cards_2.append(card)
-            
+
             team_card_1 = makeTeamCard(match, match.opponent_1, hdcp_1)
             team_card_2 = makeTeamCard(match, match.opponent_2, hdcp_2)
 
@@ -193,9 +218,13 @@ def initMatch(request):
 
             match.cards_made = True
             match.save()
-        
-            pcards1_query = PlayerScorecard.objects.filter(match=match, team=match.opponent_1)
-            pcards2_query = PlayerScorecard.objects.filter(match=match, team=match.opponent_2)
+
+            pcards1_query = PlayerScorecard.objects.filter(
+                match=match, team=match.opponent_1
+            )
+            pcards2_query = PlayerScorecard.objects.filter(
+                match=match, team=match.opponent_2
+            )
 
     except:
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -212,30 +241,28 @@ def initMatch(request):
     team1_card_serializer = TeamScorecardSerializer(team_card_1, many=False)
     team2_card_serializer = TeamScorecardSerializer(team_card_2, many=False)
 
-
     team1 = {
         "name": match.opponent_1.name,
         "id": match.opponent_1.id,
         "teamcard": team1_card_serializer.data,
-        "playercards" : cards1_serializer.data,
+        "playercards": cards1_serializer.data,
     }
 
     team2 = {
         "name": match.opponent_2.name,
         "id": match.opponent_2.id,
         "teamcard": team2_card_serializer.data,
-        "playercards" : cards2_serializer.data,
+        "playercards": cards2_serializer.data,
     }
 
     serializer = {
         "match": match_serializer.data,
         "holes": hole_data,
         "team1": team1,
-        "team2": team2
+        "team2": team2,
     }
 
     return Response(serializer)
-
 
 
 @api_view(["GET"])
@@ -266,7 +293,7 @@ def updatePlayerScorecard(request, pk):
     # hole = data.hole
     # card.scores['hole'] = data.score
     # PUT method?
-    
+
     if serializer.is_valid():
         serializer.save()
     else:
@@ -282,11 +309,10 @@ def updateTeamScorecard(request, pk):
     serializer = TeamScorecardSerializer(instance=card, data=request.data)
 
     print(card)
-    
+
     if serializer.is_valid():
         serializer.save()
     else:
         print(serializer.errors)
 
     return Response(serializer.data)
-
