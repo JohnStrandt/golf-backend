@@ -311,7 +311,7 @@ def scoreHole(request):
 
 '''
 
-                    NOT USED YET
+                    NOT USED YET, BUT WORK NICELY
 
 '''
 
