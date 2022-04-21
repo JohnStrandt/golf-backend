@@ -33,7 +33,7 @@ class Match(models.Model):
     opponent_1 = models.ForeignKey(Team, related_name='team1', null=True, on_delete=models.CASCADE)
     opponent_2 = models.ForeignKey(Team, related_name='team2', null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=True, blank=True, help_text="leave blank")
-    hdcp = models.JSONField(blank=True, null=True, help_text="leave blank")
+    # hdcp = models.JSONField(blank=True, null=True, help_text="leave blank")
     cards_made = models.BooleanField(default=False)
     current_hole = models.PositiveSmallIntegerField(default=0)
     id = models.UUIDField(
@@ -53,6 +53,27 @@ class Match(models.Model):
     class Meta:
         verbose_name_plural = "matches"
         ordering = ["event__league", "event__date"]
+
+
+
+class MatchHandicap(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    hdcp = models.JSONField(null=True, blank=True, default=dict)
+    created = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(
+        default=uuid.uuid4, unique=True, primary_key=True, editable=False
+    )
+
+    def __str__(self):
+        team = self.team.name
+        match = self.match.name
+        event = self.match.event.name
+        return f"{event} {match}, advantage: {team}"
+
+    class Meta:
+        ordering = ["match__event__league", "created"]
+
 
 
 class TeamScorecard(models.Model):

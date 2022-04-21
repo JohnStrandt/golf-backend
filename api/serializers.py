@@ -74,14 +74,16 @@ class EventSerializer(serializers.ModelSerializer):
     league = LeagueSerializer(many=False)
     class Meta:
         model = Event
-        fields = ["id", "league", "course", "name", "format", "side_played", "date"]
+        fields = ["id", "name", "date", "format", "side_played", "league", "course"]
 
 
 class MatchSerializer(serializers.ModelSerializer):
     event = EventSerializer(many=False)
+    
     class Meta:
         model = Match
-        fields = ["id", "event", "name", "hdcp", "current_hole"]
+        fields = ["id", "name", "current_hole", "event"]
+        
 
 
 class MatchStatusSerializer(serializers.ModelSerializer):

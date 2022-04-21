@@ -10,8 +10,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.hashers import make_password
 
 from league.models import Player
-from events.models import Event, Match
-from events.models import Match, PlayerScorecard, TeamScorecard
+from events.models import Event, Match, MatchHandicap, PlayerScorecard, TeamScorecard
+
 
 from .serializers import (
     EventSerializer,
@@ -121,19 +121,19 @@ def getEventMatches(request, pk):
     return Response(serializer.data)
 
 
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def getTodaysMatch(request):
     try:
         match = searchMatches(request)
         roster_data = getRosters(match)
-        match_data = MatchStatusSerializer(match, many=False)
+        match_data = MatchSerializer(match, many=False)
         serializer = {"match": match_data.data, "rosters": roster_data}
         return Response(serializer)
     except:
+        # need to catch errors - if there is no next match
         next_match = nextMatch(request)
-        print("next_match: ",next_match)
+        print("next_match: ", next_match)
         return Response(next_match, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -147,6 +147,8 @@ def startResumeMatch(request, pk):
 
     try:
         match = Match.objects.get(id=pk)
+        match_hdcp = MatchHandicap.objects.get_or_create(match=match)
+
 
         if match.cards_made:
             pcards1_query = PlayerScorecard.objects.filter(
@@ -196,8 +198,9 @@ def startResumeMatch(request, pk):
             hole_query = getHoles(match.event)
             holes = list(hole_query)
 
-            if not match.hdcp:
+            if not match_hdcp.hdcp:
                 match.hdcp = calcMatchHDCP(holes, team_card_1, team_card_2)
+                match_hdcp.save()
 
             match.cards_made = True
             match.save()
@@ -248,7 +251,6 @@ def startResumeMatch(request, pk):
     return Response(serializer)
 
 
-
 def add_scores(scores):
     total = 0
     for value in scores.values():
@@ -257,14 +259,13 @@ def add_scores(scores):
     return total
 
 
-
 def update_team_cards(cards, hole, side):
     for _card in cards:
         card = TeamScorecard.objects.get(id=_card["id"])
         card.scores.update({str(hole): _card["score"]})
-        
+
         total = add_scores(card.scores)
-        if (side == "Front"):
+        if side == "Front":
             card.front = total
         else:
             card.back = total
@@ -273,21 +274,19 @@ def update_team_cards(cards, hole, side):
         card.save()
 
 
-
 def update_player_cards(cards, hole, side):
     for _card in cards:
         card = PlayerScorecard.objects.get(id=_card["id"])
         card.scores.update({str(hole): _card["score"]})
-        
+
         total = add_scores(card.scores)
-        if (side == "Front"):
+        if side == "Front":
             card.front = total
         else:
             card.back = total
         card.total = total
 
         card.save()
-
 
 
 @api_view(["POST"])
@@ -306,16 +305,11 @@ def scoreHole(request):
     return Response(message)
 
 
-
-
-
-'''
+"""
 
                     NOT USED YET, BUT WORK NICELY
 
-'''
-
-
+"""
 
 
 @api_view(["GET"])
@@ -334,9 +328,6 @@ def getTeamCards(request):
     cards = TeamScorecard.objects.filter(match=match)
     serializer = TeamScorecardSerializer(cards, many=True)
     return Response(serializer.data)
-
-
-
 
 
 #               TESTING
