@@ -14,6 +14,7 @@ from events.models import Event, Match, MatchHandicap, PlayerScorecard, TeamScor
 
 
 from .serializers import (
+    LeagueSerializer,
     EventSerializer,
     MatchSerializer,
     MatchStatusSerializer,
@@ -73,11 +74,11 @@ def getRoutes(request):
         {"POST": "/api/signin"},
         {"POST": "/api/register"},
         {"GET": "/api/players"},
-        {"GET": "/api/players/:player.id"},
+        {"GET": "/api/players/:player_id"},
         {"GET": "/api/events"},
-        {"GET": "/api/events/:event.id"},
+        {"GET": "/api/events/:event_id"},
         {"GET": "/api/match"},
-        {"GET": "/api/match/:match.id"},
+        {"GET": "/api/match/:match_id"},
         {"GET": "/api/cards/players"},
         {"GET": "/api/cards/teams"},
         {"POST": "/api/score/player"},
@@ -85,6 +86,14 @@ def getRoutes(request):
     ]
 
     return Response(routes)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def getLeague(request):
+    league = request.user.player.league
+    serializer = LeagueSerializer(league, many=False)
+    return Response(serializer.data)
 
 
 @api_view(["GET"])
@@ -126,12 +135,29 @@ def getEventMatches(request, pk):
 def getTodaysMatch(request):
     try:
         match = searchMatches(request)
-        roster_data = getRosters(match)
-        match_data = MatchSerializer(match, many=False)
-        serializer = {"match": match_data.data, "rosters": roster_data}
+        players1_query = Player.objects.filter(team=match.opponent_1, is_sub=False)
+        players2_query = Player.objects.filter(team=match.opponent_2, is_sub=False)
+        subs1_query = Player.objects.filter(team=match.opponent_1, is_sub=True)
+        subs2_query = Player.objects.filter(team=match.opponent_2, is_sub=True)
+
+        players1_serializer = PlayerSerializer(players1_query, many=True)
+        players2_serializer = PlayerSerializer(players2_query, many=True)
+        subs1_serializer = PlayerSerializer(subs1_query, many=True)
+        subs2_serializer=PlayerSerializer(subs2_query, many=True)
+
+        match_serializer = MatchSerializer(match, many=False)
+
+        serializer = {
+            "match": match_serializer.data, 
+            "team1": players1_serializer.data,
+            "team2": players2_serializer.data,
+            "subs1": subs1_serializer.data,
+            "subs2": subs2_serializer.data,
+            }
+
         return Response(serializer)
     except:
-        # need to catch errors - if there is no next match
+        # need another try/accept? - if there is no next match
         next_match = nextMatch(request)
         print("next_match: ", next_match)
         return Response(next_match, status=status.HTTP_404_NOT_FOUND)

@@ -33,7 +33,6 @@ class Match(models.Model):
     opponent_1 = models.ForeignKey(Team, related_name='team1', null=True, on_delete=models.CASCADE)
     opponent_2 = models.ForeignKey(Team, related_name='team2', null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=True, blank=True, help_text="leave blank")
-    # hdcp = models.JSONField(blank=True, null=True, help_text="leave blank")
     cards_made = models.BooleanField(default=False)
     current_hole = models.PositiveSmallIntegerField(default=0)
     id = models.UUIDField(

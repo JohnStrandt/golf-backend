@@ -10,6 +10,7 @@ from .forms import CustomUserCreationForm, PlayerForm
 from .utils import searchProfiles, paginateProfiles
 
 
+
 def loginUser(request):
     page = "login"
 

@@ -4,6 +4,8 @@ from events.models import Match, PlayerScorecard, TeamScorecard
 from course.models import Hole
 from league.models import Player
 
+from rest_framework.response import Response
+from .serializers import PlayerSerializer
 
 
 def searchMatches(request):
@@ -59,6 +61,11 @@ def getHoles(event):
     return holes
 
 
+
+
+# I am not using getRosters in the front end, I may drop this
+# this is a cumbersome way of getting team lineups
+
 def getRosters(match):
     players_1 = Player.objects.filter(team=match.opponent_1, is_sub=False)
     players_2 = Player.objects.filter(team=match.opponent_2, is_sub=False)
@@ -73,6 +80,7 @@ def getRosters(match):
 
     players1 = list()
     for player in players_1:
+        print(player.profile_image)
         players1.append({
             "name": player.user.get_full_name(),
             "profile_image": str(player.profile_image),

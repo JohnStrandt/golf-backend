@@ -51,6 +51,7 @@ class TeamSerializer(serializers.ModelSerializer):
         fields = ["name", "id"]
 
 
+
 class PlayerSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField('get_player_name')
     team = serializers.SerializerMethodField('get_player_team')
@@ -79,11 +80,19 @@ class EventSerializer(serializers.ModelSerializer):
 
 class MatchSerializer(serializers.ModelSerializer):
     event = EventSerializer(many=False)
-    
+    team1_name = serializers.SerializerMethodField('get_team1_name')
+    team2_name = serializers.SerializerMethodField('get_team2_name')
+
     class Meta:
         model = Match
-        fields = ["id", "name", "current_hole", "event"]
-        
+        fields = ["id", "name", "current_hole", "team1_name", "team2_name","event"]
+    
+    def get_team1_name(self, match):
+        return match.opponent_1.name
+
+    def get_team2_name(self, match):
+        return match.opponent_2.name
+
 
 
 class MatchStatusSerializer(serializers.ModelSerializer):
