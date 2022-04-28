@@ -11,14 +11,35 @@ from .serializers import PlayerSerializer
 def searchMatches(request):
     today = date.today()
     team = request.user.player.team
+
+    # Q(event__date__iexact=today) - causes problems with PostgreSQL
     try:
         match = Match.objects.distinct().get(
-            Q(event__date__iexact=today) & (Q(opponent_1=team) | Q(opponent_2=team))
+            Q(event__date=today) & (Q(opponent_1=team) | Q(opponent_2=team))
         )
     except:
         match = None
 
     return match
+
+
+
+def nextMatch(request):
+    today = date.today()
+    team = request.user.player.team
+    try:
+        match = (
+            Match.objects.distinct()
+            .filter(
+                Q(event__date__gt=today) & (Q(opponent_1=team) | Q(opponent_2=team))
+            )
+            .order_by("event__date")[0]
+        )
+    except:
+        match = None
+
+    return match
+
 
 
 def getPlayerCard(player, match):
@@ -37,6 +58,7 @@ def getTeamCard(match, team, handicap):
         team=team,
     )
     return obj
+
 
 
 def getHoles(event):
@@ -62,97 +84,7 @@ def getHoles(event):
 
 
 
-
-# I am not using getRosters in the front end, I may drop this
-# this is a cumbersome way of getting team lineups
-
-def getRosters(match):
-    players_1 = Player.objects.filter(team=match.opponent_1, is_sub=False)
-    players_2 = Player.objects.filter(team=match.opponent_2, is_sub=False)
-    subs_1 = Player.objects.filter(team=match.opponent_1, is_sub=True)
-    subs_2 = Player.objects.filter(team=match.opponent_2, is_sub=True)
-
-    team1_id = str(match.opponent_1.id)
-    team2_id = str(match.opponent_2.id)
-
-    team1_name = match.opponent_1.name
-    team2_name = match.opponent_2.name
-
-    players1 = list()
-    for player in players_1:
-        print(player.profile_image)
-        players1.append({
-            "name": player.user.get_full_name(),
-            "profile_image": str(player.profile_image),
-            "id": str(player.id)
-            })
-
-    players2 = list()
-    for player in players_2:
-        players2.append({
-            "name": player.user.get_full_name(),
-            "profile_image": str(player.profile_image),
-            "id": str(player.id)
-            })
-
-    bench1 = None
-    if subs_1:
-        bench1 = list()
-        for player in subs_1:
-            bench1.append({
-                "name": player.user.get_full_name(),
-                "profile_image": str(player.profile_image),
-                "id": str(player.id)
-                })
-
-    bench2 = None
-    if subs_2:
-        bench2 = list()
-        for player in subs_2:
-            bench2.append({
-                "name": player.user.get_full_name(),
-                "profile_image": str(player.profile_image),
-                "id": str(player.id)
-                })
-
-    lineup = {
-        "team1": { 
-            "id": team1_id,
-            "name": team1_name,
-            "players": players1,
-            "bench": bench1
-            },
-        "team2": { 
-            "id": team2_id,
-            "name": team2_name,
-            "players": players2,
-            "bench": bench2
-        }
-    }
-
-    return lineup
-
-
-
-
-def nextMatch(request):
-    today = date.today()
-    team = request.user.player.team
-    try:
-        match = (
-            Match.objects.distinct()
-            .filter(
-                Q(event__date__gt=today) & (Q(opponent_1=team) | Q(opponent_2=team))
-            )
-            .order_by("event__date")[0]
-        )
-    except:
-        match = None
-
-    return match
-
-
-
+# NOT USING YET
 def init_scores(side):
     first = 1
     last = 18
@@ -168,28 +100,24 @@ def init_scores(side):
     return scores
 
 
+
 def makePlayerCard(player, match):
-    # side = match.event.side_played
-    # scores = init_scores(side)
-    # name = player.user.get_full_name()
+
     obj, created = PlayerScorecard.objects.get_or_create(
         match=match,
         player=player,
         team=player.team,
         handicap=player.handicap,
-        # scores=scores
     )
     return obj
 
 
 def makeTeamCard(match, team, handicap):
-    side = match.event.side_played
-    # scores = init_scores(side)
+
     obj, created = TeamScorecard.objects.get_or_create(
         match=match,
         team=team,
         handicap=handicap,
-        # scores = scores
     )
     return obj
 

@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
 from course.models import Course
 from .utils import SIDE_CHOICES, FORMAT_CHOICES
@@ -30,8 +31,10 @@ class Event(models.Model):
 
 class Match(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    opponent_1 = models.ForeignKey(Team, related_name='team1', null=True, on_delete=models.CASCADE)
-    opponent_2 = models.ForeignKey(Team, related_name='team2', null=True, on_delete=models.CASCADE)
+    opponent_1 = models.ForeignKey(Team, related_name='home', null=True, on_delete=models.CASCADE)
+    opponent_2 = models.ForeignKey(Team, related_name='away', null=True, on_delete=models.CASCADE)
+    team1 = ArrayField(models.UUIDField(), null=True, blank=True, help_text="leave blank")
+    team2 = ArrayField(models.UUIDField(), null=True, blank=True, help_text="leave blank")
     name = models.CharField(max_length=50, null=True, blank=True, help_text="leave blank")
     cards_made = models.BooleanField(default=False)
     current_hole = models.PositiveSmallIntegerField(default=0)
@@ -66,8 +69,8 @@ class MatchHandicap(models.Model):
 
     def __str__(self):
         team = self.team.name
-        match = self.match.name
         event = self.match.event.name
+        match = self.match.name
         return f"{event} {match}, advantage: {team}"
 
     class Meta:
@@ -78,6 +81,7 @@ class MatchHandicap(models.Model):
 class TeamScorecard(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    name = models.CharField(max_length=25, blank=True, null=True)
     handicap = models.PositiveSmallIntegerField(blank=True, null=True)
     scores = models.JSONField(null=True, blank=True, default=dict)
     front = models.PositiveSmallIntegerField(blank=True, null=True, default=0)
@@ -88,10 +92,12 @@ class TeamScorecard(models.Model):
         default=uuid.uuid4, unique=True, primary_key=True, editable=False
     )
 
+    def save(self, *args, **kwargs):
+        self.name = self.team.name
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        event = self.match.event.name
-        team = self.team.name
-        return f"{team}: {event}"
+        return f"{self.name}: {self.match.event.name}"
 
     class Meta:
         ordering = ["created"]
@@ -101,8 +107,9 @@ class PlayerScorecard(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, blank=True, null=True)
+    name = models.CharField(max_length=25, blank=True, null=True)
     handicap = models.PositiveSmallIntegerField(blank=True, null=True)
-    scores = models.JSONField(blank=True, default=dict)
+    scores = models.JSONField(blank=True, null=True, default=dict)
     front = models.PositiveSmallIntegerField(blank=True, null=True, default=0)
     back = models.PositiveSmallIntegerField(blank=True, null=True, default=0)
     total = models.PositiveSmallIntegerField(blank=True, null=True, default=0)
@@ -113,13 +120,12 @@ class PlayerScorecard(models.Model):
 
     def save(self, *args, **kwargs):
         self.handicap = self.player.handicap
-        self.team = self.player.team
+        self.team = self.player.team # may not need this
+        self.name = self.player.user.get_full_name()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        event = self.match.event.name
-        player = self.player.user.get_full_name()
-        return f"{player}: {event}"
+        return f"{self.name}: {self.match.event.name}"
 
     class Meta:
         ordering = ["created"]

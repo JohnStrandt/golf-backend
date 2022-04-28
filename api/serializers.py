@@ -3,7 +3,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.models import User
 from league.models import Player, Team, League
-from events.models import Event, Match, TeamScorecard, PlayerScorecard
+from events.models import Event, Match, TeamScorecard, PlayerScorecard, MatchHandicap
 from course.models import Course, Hole
 
 
@@ -85,7 +85,7 @@ class MatchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Match
-        fields = ["id", "name", "current_hole", "team1_name", "team2_name","event"]
+        fields = ["id", "name", "current_hole", "team1", "team2", "team1_name", "team2_name","event"]
     
     def get_team1_name(self, match):
         return match.opponent_1.name
@@ -95,35 +95,19 @@ class MatchSerializer(serializers.ModelSerializer):
 
 
 
-class MatchStatusSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Match
-        fields = ["id", "cards_made", "name"]
-
-
-
-# needed for initializing match info
-class InitPlayerScorecardSerializer(serializers.ModelSerializer):
-    player = PlayerSerializer(many=False)
-    class Meta:
-        model = PlayerScorecard
-        fields = ["player", "id", "handicap", "scores", "front", "back", "total"]
-
-
-# needed for updating scorecard scores
 class PlayerScorecardSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlayerScorecard
-        fields = ["id", "handicap", "scores", "front", "back", "total"]
+        fields = ["id", "name", "handicap", "scores", "front", "back", "total"]
 
 
 class TeamScorecardSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamScorecard
-        fields = ["id", "handicap", "scores", "front", "back", "points"]
+        fields = ["id", "name", "handicap", "scores", "front", "back", "points"]
 
 
-
-
-
+class MatchHandicapSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MatchHandicap
+        fields = '__all__'

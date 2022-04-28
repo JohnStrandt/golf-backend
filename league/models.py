@@ -73,7 +73,7 @@ class Player(models.Model):
         return str(self.username)
 
     class Meta:
-        ordering = ['-team']
+        ordering = ['-team', 'created']
 
     @property
     def imageURL(self):
