@@ -60,7 +60,6 @@ class Match(models.Model):
 
 class MatchHandicap(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     hdcp = models.JSONField(null=True, blank=True, default=dict)
     created = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
@@ -68,10 +67,9 @@ class MatchHandicap(models.Model):
     )
 
     def __str__(self):
-        team = self.team.name
         event = self.match.event.name
         match = self.match.name
-        return f"{event} {match}, advantage: {team}"
+        return f"{event}: {match}"
 
     class Meta:
         ordering = ["match__event__league", "created"]

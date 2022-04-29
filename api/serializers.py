@@ -85,7 +85,7 @@ class MatchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Match
-        fields = ["id", "name", "current_hole", "team1", "team2", "team1_name", "team2_name","event"]
+        fields = ["id", "name", "current_hole", "team1", "team2", "team1_name", "team2_name","event", "cards_made"]
     
     def get_team1_name(self, match):
         return match.opponent_1.name

@@ -24,7 +24,7 @@ urlpatterns = [
 
     path("match/", views.getTodaysMatch),
     path("match/<str:pk>/update-teams/", views.updateMatchTeams),
-    path("match/<str:pk>/make-scorecards/", views.makeScorecards),
+    path("match/<str:pk>/make-scorecards/", views.getScorecards),
 
 
     # path("match/<str:pk>/", views.startResumeMatch),

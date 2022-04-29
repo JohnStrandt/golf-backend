@@ -139,13 +139,12 @@ def getTodaysMatch(request):
     subs1_query = Player.objects.filter(team=match.opponent_1, is_sub=True)
     subs2_query = Player.objects.filter(team=match.opponent_2, is_sub=True)
 
+    match_serializer = MatchSerializer(match, many=False)
+    hole_serializer = HoleSerializer(holes, many=True)
     players1_serializer = PlayerSerializer(players1_query, many=True)
     players2_serializer = PlayerSerializer(players2_query, many=True)
     subs1_serializer = PlayerSerializer(subs1_query, many=True)
     subs2_serializer=PlayerSerializer(subs2_query, many=True)
-
-    match_serializer = MatchSerializer(match, many=False)
-    hole_serializer = HoleSerializer(holes, many=True)
 
     serializer = {
         "match": match_serializer.data,
@@ -157,8 +156,6 @@ def getTodaysMatch(request):
         }
 
     return Response(serializer)
-
-
 
 
 @api_view(["POST"])
@@ -177,11 +174,9 @@ def updateMatchTeams(request, pk):
     return Response(serializer.data, status = status.HTTP_200_OK)
 
 
-
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def makeScorecards(request, pk):
+def getScorecards(request, pk):
 
     match = Match.objects.get(id=pk)
     data = request.data
@@ -208,13 +203,13 @@ def makeScorecards(request, pk):
     hole_query = getHoles(match.event)
     holes = list(hole_query)
 
-    match_hdcp = MatchHandicap.objects.get_or_create(match=match)
-    match_hdcp.hdcp = calcMatchHDCP(holes, teamCard1, teamCard2)
+    handicap = calcMatchHDCP(holes, teamCard1, teamCard2)
+    match_hdcp, created = MatchHandicap.objects.get_or_create(match=match, hdcp=handicap)
     match_hdcp.save()
 
-    # I may or may not drop cards_made...
-    match.cards_made = True
-    match.save()
+    if not match.cards_made:
+        match.cards_made = True
+        match.save()
 
     playerSerializer1 = PlayerScorecardSerializer(scorecards1, many=True)
     playerSerializer2 = PlayerScorecardSerializer(scorecards2, many=True)
@@ -222,153 +217,19 @@ def makeScorecards(request, pk):
     teamSerializer2 = TeamScorecardSerializer(teamCard2, many=False)
     hdcpSerializer = MatchHandicapSerializer(match_hdcp, many=False)
 
-
     serializer = {
-        "handicap": hdcpSerializer,
+        "handicap": hdcpSerializer.data,
         "cards1": {
-            "team": teamSerializer1,
-            "players": playerSerializer1
+            "team": teamSerializer1.data,
+            "players": playerSerializer1.data
         },
         "cards2": {
-            "team": teamSerializer2,
-            "players": playerSerializer2
+            "team": teamSerializer2.data,
+            "players": playerSerializer2.data
         }
     }
 
     return Response(serializer)
-
-
-
-
-
-"""
-
-                        WORK ZONE
-
-"""
-
-
-
-# @api_view(["GET"])
-# @permission_classes([IsAuthenticated])
-# def startResumeMatch(request, pk):
-#     hole_query = None
-#     pcards1_query = None
-#     pcards2_query = None
-
-#     try:
-#         match = Match.objects.get(id=pk)
-#         match_hdcp = MatchHandicap.objects.get_or_create(match=match)
-
-
-#         if match.cards_made:
-#             pcards1_query = PlayerScorecard.objects.filter(
-#                 match=match, team=match.opponent_1
-#             )
-#             player_cards_1 = list(pcards1_query)
-#             pcards2_query = PlayerScorecard.objects.filter(
-#                 match=match, team=match.opponent_2
-#             )
-#             player_cards_2 = list(pcards2_query)
-
-#             team_card_1 = TeamScorecard.objects.get(match=match, team=match.opponent_1)
-#             team_card_2 = TeamScorecard.objects.get(match=match, team=match.opponent_2)
-
-#             hole_query = getHoles(match.event)
-
-#         else:
-#             data = request.data
-#             team_1 = []
-#             team_2 = []
-#             hdcp_1 = 0
-#             hdcp_2 = 0
-#             player_cards_1 = []
-#             player_cards_2 = []
-
-#             for playerID in data["team1"]:
-#                 temp = Player.objects.get(id=playerID)
-#                 team_1.append(temp)
-
-#             for playerID in data["team2"]:
-#                 temp = Player.objects.get(id=playerID)
-#                 team_2.append(temp)
-
-#             for player in team_1:
-#                 hdcp_1 += player.handicap
-#                 card = makePlayerCard(player, match)
-#                 player_cards_1.append(card)
-
-#             for player in team_2:
-#                 hdcp_2 += player.handicap
-#                 card = makePlayerCard(player, match)
-#                 player_cards_2.append(card)
-
-#             team_card_1 = makeTeamCard(match, match.opponent_1, hdcp_1)
-#             team_card_2 = makeTeamCard(match, match.opponent_2, hdcp_2)
-
-#             hole_query = getHoles(match.event)
-#             holes = list(hole_query)
-
-#             if not match_hdcp.hdcp:
-#                 match.hdcp = calcMatchHDCP(holes, team_card_1, team_card_2)
-#                 match_hdcp.save()
-
-#             match.cards_made = True
-#             match.save()
-
-#             pcards1_query = PlayerScorecard.objects.filter(
-#                 match=match, team=match.opponent_1
-#             )
-#             pcards2_query = PlayerScorecard.objects.filter(
-#                 match=match, team=match.opponent_2
-#             )
-
-#     except:
-#         return Response(status=status.HTTP_404_NOT_FOUND)
-
-#     hole_serializer = HoleSerializer(hole_query, many=True)
-#     hole_data = dict()
-#     for hole in hole_serializer.data:
-#         hole_data.update({str(hole["number"]): hole})
-
-#     match_serializer = MatchSerializer(match, many=False)
-#     cards1_serializer = InitPlayerScorecardSerializer(pcards1_query, many=True)
-#     cards2_serializer = InitPlayerScorecardSerializer(pcards2_query, many=True)
-
-#     team1_card_serializer = TeamScorecardSerializer(team_card_1, many=False)
-#     team2_card_serializer = TeamScorecardSerializer(team_card_2, many=False)
-
-#     team1 = {
-#         "name": match.opponent_1.name,
-#         "id": match.opponent_1.id,
-#         "teamcard": team1_card_serializer.data,
-#         "playercards": cards1_serializer.data,
-#     }
-
-#     team2 = {
-#         "name": match.opponent_2.name,
-#         "id": match.opponent_2.id,
-#         "teamcard": team2_card_serializer.data,
-#         "playercards": cards2_serializer.data,
-#     }
-
-#     serializer = {
-#         "match": match_serializer.data,
-#         "holes": hole_data,
-#         "team1": team1,
-#         "team2": team2,
-#     }
-
-#     return Response(serializer)
-
-
-
-"""
-
-            GONNA DELETE START RESUME MATCH CRAP SOON, BITCHES!!
-
-"""
-
 
 
 def add_scores(scores):
@@ -425,12 +286,12 @@ def scoreHole(request):
     return Response(message)
 
 
+
 """
 
                     NOT USED YET, BUT WORKS NICELY
 
 """
-
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
