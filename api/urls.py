@@ -26,9 +26,8 @@ urlpatterns = [
     path("match/<str:pk>/update-teams/", views.updateMatchTeams),
     path("match/<str:pk>/make-scorecards/", views.getScorecards),
 
-
-    # path("match/<str:pk>/", views.startResumeMatch),
-    path("match/score", views.scoreHole),
+    path("match/<str:pk>/score/", views.scoreHole),
+    path("match/bonus/", views.awardBonus),
 
 
     # not used yet

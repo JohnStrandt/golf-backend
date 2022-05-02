@@ -25,7 +25,7 @@ from .serializers import (
     MatchHandicapSerializer,
 )
 
-from .utils import calcMatchHDCP
+from .utils import calcMatchHDCP, listToDictionary
 from .selectors import (
     searchMatches,
     makePlayerCard,
@@ -134,6 +134,14 @@ def getTodaysMatch(request):
 
     match = searchMatches(request)
     holes = getHoles(match.event)
+
+    # current_hole initialized from first hole, updated while scoring
+    if not (match.cards_made):
+        match.current_hole = holes[0].number
+        match.save()
+
+    current_hole = match.current_hole
+
     players1_query = Player.objects.filter(team=match.opponent_1, is_sub=False)
     players2_query = Player.objects.filter(team=match.opponent_2, is_sub=False)
     subs1_query = Player.objects.filter(team=match.opponent_1, is_sub=True)
@@ -141,14 +149,16 @@ def getTodaysMatch(request):
 
     match_serializer = MatchSerializer(match, many=False)
     hole_serializer = HoleSerializer(holes, many=True)
+    hole_data = listToDictionary(hole_serializer.data)
     players1_serializer = PlayerSerializer(players1_query, many=True)
     players2_serializer = PlayerSerializer(players2_query, many=True)
     subs1_serializer = PlayerSerializer(subs1_query, many=True)
     subs2_serializer=PlayerSerializer(subs2_query, many=True)
 
     serializer = {
+        "current_hole": current_hole,
         "match": match_serializer.data,
-        "holes": hole_serializer.data,
+        "holes": hole_data,
         "starters1": players1_serializer.data,
         "starters2": players2_serializer.data,
         "subs1": subs1_serializer.data,
@@ -272,7 +282,12 @@ def update_player_cards(cards, hole, side):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def scoreHole(request):
+def scoreHole(request, pk):
+
+    match = Match.objects.get(id=pk)
+    match.current_hole = match.current_hole + 1
+    match.save()
+
     data = request.data
     hole = data["hole"]
     side = data["side"]
@@ -282,14 +297,96 @@ def scoreHole(request):
     update_team_cards(teamCards, hole, side)
     update_player_cards(playerCards, hole, side)
 
-    message = "Cards Updated"
-    return Response(message)
+    scorecards1 = []
+    scorecards2 = []
+
+    scorecards1.append(PlayerScorecard.objects.get(id=playerCards[0]["id"]))
+    scorecards1.append(PlayerScorecard.objects.get(id=playerCards[1]["id"]))
+    scorecards2.append(PlayerScorecard.objects.get(id=playerCards[2]["id"]))
+    scorecards2.append(PlayerScorecard.objects.get(id=playerCards[3]["id"]))
+
+    teamCard1= TeamScorecard.objects.get(id=teamCards[0]["id"])
+    teamCard2 = TeamScorecard.objects.get(id=teamCards[1]["id"])
+
+    teamSerializer1 = TeamScorecardSerializer(teamCard1, many=False)
+    teamSerializer2 = TeamScorecardSerializer(teamCard2, many=False)
+
+    playerSerializer1 = PlayerScorecardSerializer(scorecards1, many=True)
+    playerSerializer2 = PlayerScorecardSerializer(scorecards2, many=True)
+
+    matchSerializer = MatchSerializer(match, many=False) 
+
+    serializer = {
+        "match": matchSerializer.data,
+        "cards1": {
+            "team": teamSerializer1.data,
+            "players": playerSerializer1.data
+        },
+        "cards2": {
+            "team": teamSerializer2.data,
+            "players": playerSerializer2.data
+        }
+    }
+
+    return Response(serializer)
+
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def awardBonus(request):
+
+    data = request.data
+    teamCards = data["team_cards"]
+    playerCards = data["player_cards"]
+
+
+
+    scorecards1 = []
+    scorecards2 = []
+
+    scorecards1.append(PlayerScorecard.objects.get(id=playerCards[0]["id"]))
+    scorecards1.append(PlayerScorecard.objects.get(id=playerCards[1]["id"]))
+    scorecards2.append(PlayerScorecard.objects.get(id=playerCards[2]["id"]))
+    scorecards2.append(PlayerScorecard.objects.get(id=playerCards[3]["id"]))
+
+    playerSerializer1 = PlayerScorecardSerializer(scorecards1, many=True)
+    playerSerializer2 = PlayerScorecardSerializer(scorecards2, many=True)
+
+    teamCard1= TeamScorecard.objects.get(id=teamCards[0]["id"])
+    teamCard2 = TeamScorecard.objects.get(id=teamCards[1]["id"])
+
+    teamCard1.points = teamCard1.points + teamCards[0]["points"]
+    teamCard2.points = teamCard2.points + teamCards[1]["points"]
+
+    teamCard1.save()
+    teamCard2.save()
+
+    teamSerializer1 = TeamScorecardSerializer(teamCard1, many=False)
+    teamSerializer2 = TeamScorecardSerializer(teamCard2, many=False)
+
+    serializer = {
+        "cards1": {
+            "team": teamSerializer1.data,
+            "players": playerSerializer1.data
+        },
+        "cards2": {
+            "team": teamSerializer2.data,
+            "players": playerSerializer2.data
+        }
+    }
+
+    return Response(serializer)
+
+
 
 
 
 """
 
-                    NOT USED YET, BUT WORKS NICELY
+                NOT USED IN FRONTEND YET, BUT WORKS NICELY
+
+                    REFERENCE IN THE BACKEND SOMEWHERE...
 
 """
 

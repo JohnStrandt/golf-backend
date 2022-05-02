@@ -7,6 +7,8 @@ def paginateProfiles(request, profiles, results):
     page = request.GET.get("page")
     paginator = Paginator(profiles, results)
 
+    print("hi")
+
     try:
         profiles = paginator.page(page)
 

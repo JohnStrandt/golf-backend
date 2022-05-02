@@ -95,10 +95,22 @@ class MatchSerializer(serializers.ModelSerializer):
 
 
 
+class PlayerPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Player
+        fields = ["profile_image"]
+
+
+
 class PlayerScorecardSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField('get_player_photo')
     class Meta:
         model = PlayerScorecard
-        fields = ["id", "name", "handicap", "scores", "front", "back", "total"]
+        fields = ["id", "name", "profile_image", "handicap", "scores", "front", "back", "total"]
+    
+    def get_player_photo(self, scorecard):
+        photo = PlayerPhotoSerializer(scorecard.player, many=False)
+        return photo.data["profile_image"]
 
 
 class TeamScorecardSerializer(serializers.ModelSerializer):

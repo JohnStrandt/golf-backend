@@ -72,15 +72,15 @@ def getHoles(event):
         first = 10
 
     try:
-        holes = (
+        hole_query = (
             Hole.objects.distinct()
             .filter(Q(course=event.course) & Q(number__gte=first) & Q(number__lte=last))
             .order_by("number")
         )
     except:
-        holes = None
+        hole_query = None
 
-    return holes
+    return hole_query
 
 
 

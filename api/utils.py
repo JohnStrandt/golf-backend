@@ -41,15 +41,18 @@ def calcMatchHDCP(holes, team1_card, team2_card):
     
     if team1_card.handicap > team2_card.handicap:
         team = team1_card.team
+        card_id = team1_card.id
     else:
         team = team2_card.team
+        card_id = team2_card.id
 
     # case where teams are equally matched - no strokes given
-    match_hdcp = {"team": None, "strokes_given": 0, "hdcp_strokes": hdcp_dict}
+    match_hdcp = {"team": None, "total_strokes": 0, "hdcp_strokes": hdcp_dict}
 
     # team is the one given strokes
     if strokes_given:
         match_hdcp = {
+            "card_id": str(card_id),
             "team": team.name,
             "team_id": str(team.id),
             "total_strokes": strokes_given,
@@ -57,3 +60,14 @@ def calcMatchHDCP(holes, team1_card, team2_card):
         }
 
     return match_hdcp
+
+
+def listToDictionary (list):
+
+    dictionary = {}
+
+    for item in list:
+        dictionary[str(item["number"])] = item
+
+    return dictionary
+
