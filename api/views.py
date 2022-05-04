@@ -31,7 +31,7 @@ from .selectors import (
     makePlayerCard,
     makeTeamCard,
     getHoles,
-    nextMatch,
+    nextMatch
 )
 
 
@@ -130,9 +130,20 @@ def getEventMatches(request, pk):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+def getNextMatch(request):
+    match = nextMatch(request)
+    serializer = MatchSerializer(match, many=False)
+    return Response(serializer.data, status = status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def getTodaysMatch(request):
 
     match = searchMatches(request)
+    if not match:
+        return Response(status = status.HTTP_404_NOT_FOUND)
+
     holes = getHoles(match.event)
 
     # current_hole initialized from first hole, updated while scoring
@@ -165,7 +176,7 @@ def getTodaysMatch(request):
         "subs2": subs2_serializer.data,
         }
 
-    return Response(serializer)
+    return Response(serializer, status = status.HTTP_302_FOUND)
 
 
 @api_view(["POST"])
@@ -332,15 +343,20 @@ def scoreHole(request, pk):
 
 
 
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def awardBonus(request):
+def awardBonus(request, pk):
+
+    match = Match.objects.get(id=pk)
+    side = match.event.side_played
+
+    date = match.event.date
+    print(date)
 
     data = request.data
     teamCards = data["team_cards"]
     playerCards = data["player_cards"]
-
-
 
     scorecards1 = []
     scorecards2 = []
@@ -356,8 +372,14 @@ def awardBonus(request):
     teamCard1= TeamScorecard.objects.get(id=teamCards[0]["id"])
     teamCard2 = TeamScorecard.objects.get(id=teamCards[1]["id"])
 
-    teamCard1.points = teamCard1.points + teamCards[0]["points"]
-    teamCard2.points = teamCard2.points + teamCards[1]["points"]
+    # case for 18 holes not included yet...
+    # points = front + back + bonus
+    if side == "Front":
+        teamCard1.points = teamCard1.front + teamCards[0]["bonus"]
+        teamCard2.points = teamCard2.front + teamCards[1]["bonus"]
+    else:
+        teamCard1.points = teamCard1.back + teamCards[0]["bonus"]
+        teamCard2.points = teamCard2.back + teamCards[1]["bonus"]
 
     teamCard1.save()
     teamCard2.save()

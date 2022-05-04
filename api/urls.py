@@ -23,11 +23,12 @@ urlpatterns = [
     path("events/<str:pk>/", views.getEventMatches),
 
     path("match/", views.getTodaysMatch),
+    path("match/next/", views.getNextMatch),
     path("match/<str:pk>/update-teams/", views.updateMatchTeams),
     path("match/<str:pk>/make-scorecards/", views.getScorecards),
 
     path("match/<str:pk>/score/", views.scoreHole),
-    path("match/bonus/", views.awardBonus),
+    path("match/<str:pk>/bonus/", views.awardBonus),
 
 
     # not used yet
