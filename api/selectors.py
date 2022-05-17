@@ -35,6 +35,7 @@ def nextMatch(request):
             )
             .order_by("event__date")[0]
         )
+
     except:
         match = None
 

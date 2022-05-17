@@ -132,6 +132,9 @@ def getEventMatches(request, pk):
 @permission_classes([IsAuthenticated])
 def getNextMatch(request):
     match = nextMatch(request)
+    if not match:
+        return Response(status = status.HTTP_404_NOT_FOUND)
+
     serializer = MatchSerializer(match, many=False)
     return Response(serializer.data, status = status.HTTP_200_OK)
 
@@ -176,7 +179,7 @@ def getTodaysMatch(request):
         "subs2": subs2_serializer.data,
         }
 
-    return Response(serializer, status = status.HTTP_302_FOUND)
+    return Response(serializer, status = status.HTTP_200_OK)
 
 
 @api_view(["POST"])

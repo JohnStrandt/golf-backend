@@ -103,9 +103,11 @@ def profiles(request):
         league = request.user.player.league
 
     profiles, search_query = searchProfiles(request, league)
+
     custom_range, profiles = paginateProfiles(request, profiles, 6)
 
     context = {'profiles': profiles, 'search_query': search_query, 'custom_range': custom_range, 'league': league}
+
     return render(request, 'league/profiles.html', context)
 
 

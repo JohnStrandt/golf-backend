@@ -7,8 +7,6 @@ def paginateProfiles(request, profiles, results):
     page = request.GET.get("page")
     paginator = Paginator(profiles, results)
 
-    print("hi")
-
     try:
         profiles = paginator.page(page)
 
@@ -39,10 +37,12 @@ def searchProfiles(request, league):
         search_query = request.GET.get("search_query")
 
     # __iexact - must match perfectly
+    # __iexact - often causes problems
     # __icontains - search with partial words
     # distinct() eliminates duplicates
     profiles = Player.objects.distinct().filter(
-        Q(league__name__iexact=league)
+
+        Q(league__name=league)
         & (
             Q(first_name__icontains=search_query)
             | Q(last_name__icontains=search_query)
